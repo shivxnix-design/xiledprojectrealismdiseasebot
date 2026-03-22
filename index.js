@@ -46,7 +46,9 @@ client.on("interactionCreate", async (interaction) => {
         });
       }
 
-      const infected = Math.random() < 0.9;
+      // Megalania always infects; others 90% chance
+      const infected = attacker === "meg" ? true : Math.random() < 0.9;
+
       if (!infected) {
         const embed = new EmbedBuilder()
           .setTitle("🧬 DISEASE EXPOSURE ALERT")

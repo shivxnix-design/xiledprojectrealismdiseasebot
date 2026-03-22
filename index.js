@@ -13,7 +13,7 @@ const variantThumbnails = {
   SAURO_OSTEO: "https://cdn.discordapp.com/attachments/1475249130283729100/1485075127619031111/content.png?ex=69c08b7d&is=69bf39fd&hm=118139ed21304ca6652157be0e13ac7e7f905308dc6e1affb6c0ac92b1b504ae&"
 };
 
-// In-memory tracking for active infections/diseases
+// In-memory tracking
 const activeDiseases = {};   // userId -> diseaseKey
 const activeInfections = {}; // userId -> infectionKey
 
@@ -56,9 +56,11 @@ client.on("interactionCreate", async (interaction) => {
           .setDescription(`You survived an attack from **${attackerName}**, and no infection developed.`)
           .addFields(
             { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
-            { name: underline("Attacker"), value: attackerName, inline: true }
+            { name: underline("Attacker"), value: attackerName, inline: true },
+            { name: underline("Status"), value: "No Infection", inline: true }
           )
           .setFooter({ text: "Xiled Project Realism • Disease System" });
+
         return interaction.reply({ embeds: [embed] });
       }
 
@@ -149,7 +151,19 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       const infected = Math.random() < 0.85;
-      if (!infected) return interaction.reply({ content: "Your injuries did not result in infection." });
+      if (!infected) {
+        const embed = new EmbedBuilder()
+          .setTitle("🦴 INJURY STATUS")
+          .setColor(0x57F287)
+          .setDescription("Your sauropod injuries did not result in a bone infection.")
+          .addFields(
+            { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
+            { name: underline("Condition"), value: "No Infection", inline: true }
+          )
+          .setFooter({ text: "Xiled Project Realism • Infection System" });
+
+        return interaction.reply({ embeds: [embed] });
+      }
 
       activeInfections[interaction.user.id] = "SAURO_OSTEO";
 

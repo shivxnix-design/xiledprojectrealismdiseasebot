@@ -13,6 +13,10 @@ const variantThumbnails = {
   SAURO_OSTEO: "https://cdn.discordapp.com/attachments/1475249130283729100/1485075127619031111/content.png?ex=69c08b7d&is=69bf39fd&hm=118139ed21304ca6652157be0e13ac7e7f905308dc6e1affb6c0ac92b1b504ae&"
 };
 
+// In-memory tracking for active infections/diseases
+const activeDiseases = {};   // userId -> diseaseKey
+const activeInfections = {}; // userId -> infectionKey
+
 // Helper to underline text
 function underline(text) {
   return text.split("").map(c => c + "\u0332").join("");
@@ -35,6 +39,13 @@ client.on("interactionCreate", async (interaction) => {
       const attacker = interaction.options.getString("attacker");
       const attackerName = attacker === "meg" ? "Megalania" : "Metricanthosaurus";
 
+      if (activeDiseases[interaction.user.id]) {
+        return interaction.reply({
+          content: "You already have an active infection. Use `/disease outcome` first.",
+          ephemeral: true
+        });
+      }
+
       const infected = Math.random() < 0.9;
       if (!infected) {
         const embed = new EmbedBuilder()
@@ -51,6 +62,8 @@ client.on("interactionCreate", async (interaction) => {
 
       const diseaseKey = Math.random() < 0.7 ? "HRV2" : "HRV_DELTA";
       const disease = diseases[diseaseKey];
+
+      activeDiseases[interaction.user.id] = diseaseKey;
 
       const nextStepInstruction = diseaseKey === "HRV2"
         ? "Roleplay symptoms based on your dinosaur's profile, and apply the disease by typing **!hrv2** in local chat in-game."
@@ -73,8 +86,14 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     if (sub === "outcome") {
-      // Determine which disease the user had
-      const diseaseKey = Math.random() < 0.7 ? "HRV2" : "HRV_DELTA";
+      const diseaseKey = activeDiseases[interaction.user.id];
+      if (!diseaseKey) {
+        return interaction.reply({
+          content: "You have no active disease. Use `/disease expose` first.",
+          ephemeral: true
+        });
+      }
+
       const disease = diseases[diseaseKey];
 
       let outcome;
@@ -89,11 +108,12 @@ client.on("interactionCreate", async (interaction) => {
           ? "Type **!recover** in local chat to recover from infection."
           : "Type **!fatal** in local chat to put your dinosaur to rest.";
       } else if (diseaseKey === "HRV_DELTA") {
-        // HRV_DELTA is always fatal
         outcome = "Succumbed to infection";
         color = 0xED4245;
         nextStep = "Type **!fatal** in local chat to put your dinosaur to rest.";
       }
+
+      delete activeDiseases[interaction.user.id];
 
       const embed = new EmbedBuilder()
         .setTitle("☣️ INFECTION OUTCOME")
@@ -119,8 +139,17 @@ client.on("interactionCreate", async (interaction) => {
     const disease = diseases.SAURO_OSTEO;
 
     if (sub === "apply") {
+      if (activeInfections[interaction.user.id]) {
+        return interaction.reply({
+          content: "You already have an active bone infection. Use `/infection outcome` first.",
+          ephemeral: true
+        });
+      }
+
       const infected = Math.random() < 0.85;
       if (!infected) return interaction.reply({ content: "Your injuries did not result in infection." });
+
+      activeInfections[interaction.user.id] = "SAURO_OSTEO";
 
       const embed = new EmbedBuilder()
         .setTitle("⚠️ BONE INFECTION DEVELOPED")
@@ -138,10 +167,19 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     if (sub === "outcome") {
+      if (!activeInfections[interaction.user.id]) {
+        return interaction.reply({
+          content: "You have no active bone infection. Use `/infection apply` first.",
+          ephemeral: true
+        });
+      }
+
       const survived = Math.random() < 0.8;
       const outcome = survived ? "Stabilized" : "Fatal Complications";
       const color = survived ? 0x57F287 : 0xED4245;
       const nextStep = survived ? "Continue roleplaying long-term injury." : "Type **!fatal** in local chat.";
+
+      delete activeInfections[interaction.user.id];
 
       const embed = new EmbedBuilder()
         .setTitle("☣️ INFECTION OUTCOME")

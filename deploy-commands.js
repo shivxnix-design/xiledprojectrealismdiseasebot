@@ -11,14 +11,14 @@ const commands = [
     description: "Disease system",
     options: [
       {
-        type: 1,
+        type: 1, // Subcommand
         name: "expose",
-        description: "Roll infection chance",
+        description: "Roll infection chance from attacker",
         options: [
           {
             type: 3,
             name: "attacker",
-            description: "What attacked you",
+            description: "The dinosaur that attacked you",
             required: true,
             choices: [
               { name: "Megalania", value: "meg" },
@@ -30,14 +30,14 @@ const commands = [
       {
         type: 1,
         name: "outcome",
-        description: "Resolve infection",
+        description: "Resolve infection outcome",
         options: []
       }
     ]
   },
   {
     name: "infection",
-    description: "Injury-based infection system",
+    description: "Sauropod bone infection system",
     options: [
       {
         type: 1,
@@ -63,9 +63,8 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
       Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: commands }
     );
-
-    console.log("Commands registered.");
+    console.log("Commands registered successfully.");
   } catch (error) {
-    console.error(error);
+    console.error("Error registering commands:", error);
   }
 })();

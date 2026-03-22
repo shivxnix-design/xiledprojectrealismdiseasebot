@@ -154,13 +154,16 @@ client.on("interactionCreate", async (interaction) => {
       activeInfections[interaction.user.id] = "SAURO_OSTEO";
 
       const embed = new EmbedBuilder()
-        .setTitle("⚠️ BONE INFECTION DEVELOPED")
+        .setTitle("⚠️ SAUROPOD BONE INFECTION")
         .setColor(0xE6B800)
         .setThumbnail(variantThumbnails["SAURO_OSTEO"])
-        .setDescription("A **bone infection** has developed following severe trauma.")
+        .setDescription(`**${disease.name}** has developed after trauma.`)
         .addFields(
-          { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
-          { name: underline("Condition"), value: disease.name },
+          { name: underline("Affected Bones"), value: "Vertebrae, Ribs, Limbs (femur, humerus), Tail vertebrae" },
+          { name: underline("Symptoms & Signs"), value: "Lameness, pain when bearing weight, reduced mobility, lethargy" },
+          { name: underline("Behavior Changes"), value: "Reduced travel, preference for resting, slower feeding, fallen behind herd, increased vulnerability" },
+          { name: underline("Severity Stages"), value: "Stage 1: Bone Pain\nStage 2: Bone Necrosis\nStage 3: Extreme Bone Weakness / Fractures likely" },
+          { name: underline("Transmission"), value: "Not contagious; develops after injuries" },
           { name: underline("Next Step"), value: "Type **!osteo** in local chat and roleplay behavior." }
         )
         .setFooter({ text: "Xiled Project Realism • Infection System" });

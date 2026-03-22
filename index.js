@@ -9,23 +9,19 @@ const client = new Client({
 
 const DATA_PATH = "./data/infections.json";
 
-// Load infections from JSON
 function loadData() {
   return JSON.parse(fs.readFileSync(DATA_PATH));
 }
 
-// Save infections to JSON
 function saveData(data) {
   fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
 }
 
-// Map variants to small thumbnail images
 const variantThumbnails = {
-  HRV2: "https://cdn.discordapp.com/attachments/1475249130283729100/1484910605436719224/Server_Edits-12_1.png?ex=69bff244&is=69bea0c4&hm=b2f3545c976e587f89181ac8b1e340d5da6d500f3481ed3817c2be16fbe6de08&",
-  HRV_DELTA: "https://cdn.discordapp.com/attachments/1475249130283729100/1484910569734799360/Server_Edits-12.png?ex=69bff23c&is=69bea0bc&hm=54f2d5005240593f1aa1d0b3fae8324841d2771e59bd3192279ce651f0894a53&"
+  HRV2: "https://cdn.discordapp.com/attachments/1475249130283729100/1484910605436719224/Server_Edits-12_1.png",
+  HRV_DELTA: "https://cdn.discordapp.com/attachments/1475249130283729100/1484910569734799360/Server_Edits-12.png"
 };
 
-// Helper function to underline text
 function underline(text) {
   return text.split("").map(c => c + "\u0332").join("");
 }
@@ -40,78 +36,84 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.commandName === "disease") {
     const sub = interaction.options.getSubcommand();
 
-    // -------------------
-    // EXPOSE COMMAND
-    // -------------------
     if (sub === "expose") {
       const data = loadData();
 
       if (data[interaction.user.id]) {
         return interaction.reply({
-          content: "You already have an active infection. Use `/disease outcome` first.",
+          content: "You already have an active condition. Use `/disease outcome` first.",
           ephemeral: true
         });
       }
 
       const attacker = interaction.options.getString("attacker");
+      const dino = interaction.options.getString("dinosaur");
+
       const attackerName = attacker === "meg" ? "Megalania" : "Metricanthosaurus";
 
-      // 90% chance to be infected
       const infected = Math.random() < 0.9;
 
       if (!infected) {
         const embed = new EmbedBuilder()
-          .setTitle("🧬 DISEASE EXPOSURE ALERT")
+          .setTitle("🧬 EXPOSURE EVENT")
           .setColor(0x57F287)
-          .setDescription(`You survived an attack from **${attackerName}**, and no infection developed.`)
+          .setDescription(`You survived an encounter with **${attackerName}**, and no condition developed.`)
           .addFields(
             { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
-            { name: underline("Attacker"), value: attackerName, inline: true }
+            { name: underline("Source"), value: attackerName, inline: true }
           )
           .setFooter({ text: "Xiled Project Realism • Disease System" });
 
         return interaction.reply({ embeds: [embed] });
       }
 
-      // Roll disease variant
-      const diseaseKey = Math.random() < 0.7 ? "HRV2" : "HRV_DELTA";
+      let possibleDiseases = ["HRV2", "HRV_DELTA"];
+
+      if (dino === "sauropod") {
+        possibleDiseases.push("SAURO_OSTEO");
+      }
+
+      const diseaseKey = possibleDiseases[Math.floor(Math.random() * possibleDiseases.length)];
       const disease = diseases[diseaseKey];
 
-      // Save infection
       data[interaction.user.id] = { disease: diseaseKey };
       saveData(data);
 
-      // Variant-specific next step
-      let nextStepInstruction = diseaseKey === "HRV2"
-        ? "Roleplay symptoms based on your dinosaur's profile, then type **!hrv2** in local chat."
-        : "Roleplay symptoms based on your dinosaur's profile, then type **!hrvdelta** in local chat.";
+      let exposureText;
+      let nextStepInstruction;
+
+      if (diseaseKey === "SAURO_OSTEO") {
+        exposureText = "You have developed a **bone infection** following severe trauma.";
+        nextStepInstruction = "Roleplay progressive bone damage and mobility issues and dont forget to type **!osteo** in local chat.";
+      } else {
+        exposureText = `You have been infected by a **${attackerName}**.`;
+        nextStepInstruction = diseaseKey === "HRV2"
+          ? "Roleplay symptoms based on your dinosaur's profile and dont forget to type  type **!hrv2** in local chat."
+          : "Roleplay symptoms based on your dinosaur's profile and dont forget to type  type **!hrvdelta** in local chat.";
+      }
 
       const embed = new EmbedBuilder()
-        .setTitle("⚠️ WARNING: INFECTION CONTRACTED")
+        .setTitle("⚠️ CONDITION APPLIED")
         .setColor(0xE6B800)
-        .setDescription(`You have been infected by a **${attackerName}**.`)
+        .setDescription(exposureText)
         .addFields(
           { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
-          { name: underline("Status"), value: "Infected", inline: true },
-          { name: underline("Disease"), value: disease.name },
+          { name: underline("Status"), value: "Condition Active", inline: true },
+          { name: underline("Condition"), value: disease.name },
           { name: underline("Next Step"), value: `${nextStepInstruction}\n\nFollow your dinosaur's disease section carefully.` }
         )
-        .setThumbnail(variantThumbnails[diseaseKey])
         .setFooter({ text: "Xiled Project Realism • Disease System" });
 
       return interaction.reply({ embeds: [embed] });
     }
 
-    // -------------------
-    // OUTCOME COMMAND
-    // -------------------
     if (sub === "outcome") {
       const data = loadData();
       const userData = data[interaction.user.id];
 
       if (!userData) {
         return interaction.reply({
-          content: "You have no active infections.",
+          content: "You have no active conditions.",
           ephemeral: true
         });
       }
@@ -128,7 +130,14 @@ client.on("interactionCreate", async (interaction) => {
         outcome = survived ? "Recovered" : "Succumbed to infection";
         color = survived ? 0x57F287 : 0xED4245;
         nextStep = survived
-          ? "Type **!recovered** in local chat to recover from infection."
+          ? "Type **!recovered** in local chat to recover."
+          : "Type **!fatal** in local chat to put your dinosaur to rest.";
+      } else if (diseaseKey === "SAURO_OSTEO") {
+        const survived = Math.random() < 0.8;
+        outcome = survived ? "Condition Stabilized" : "Fatal Complications";
+        color = survived ? 0x57F287 : 0xED4245;
+        nextStep = survived
+          ? "Continue roleplaying a long-term injury. Mobility should remain reduced."
           : "Type **!fatal** in local chat to put your dinosaur to rest.";
       } else {
         outcome = "Fatal";
@@ -136,20 +145,18 @@ client.on("interactionCreate", async (interaction) => {
         nextStep = "Type **!fatal** in local chat to put your dinosaur to rest.";
       }
 
-      // Remove infection
       delete data[interaction.user.id];
       saveData(data);
 
       const embed = new EmbedBuilder()
-        .setTitle("☣️ INFECTION OUTCOME")
+        .setTitle("☣️ CONDITION OUTCOME")
         .setColor(color)
-        .setDescription(`Your infection outcome for **${disease.name}** has been determined.\n\n`)
+        .setDescription(`The outcome of **${disease.name}** has been determined.\n\n`)
         .addFields(
           { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
           { name: underline("Final Result"), value: outcome, inline: true },
-          { name: underline("Next Step"), value: `${nextStep}\n\nRemember that your dinosaur's story does not end here.` }
+          { name: underline("Next Step"), value: `${nextStep}\n\nRemember that your dinosaur's story continues.` }
         )
-        .setThumbnail(variantThumbnails[diseaseKey])
         .setFooter({ text: "Xiled Project Realism • Disease System" });
 
       return interaction.reply({ embeds: [embed] });

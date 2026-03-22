@@ -6,7 +6,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-// Real thumbnails
+// Thumbnails
 const variantThumbnails = {
   HRV2: "https://cdn.discordapp.com/attachments/1475249130283729100/1484910605436719224/Server_Edits-12_1.png?ex=69bff244&is=69bea0c4&hm=b2f3545c976e587f89181ac8b1e340d5da6d500f3481ed3817c2be16fbe6de08&",
   HRV_DELTA: "https://cdn.discordapp.com/attachments/1475249130283729100/1484910569734799360/Server_Edits-12.png?ex=69bff23c&is=69bea0bc&hm=54f2d5005240593f1aa1d0b3fae8324841d2771e59bd3192279ce651f0894a53&",
@@ -53,8 +53,8 @@ client.on("interactionCreate", async (interaction) => {
       const disease = diseases[diseaseKey];
 
       const nextStepInstruction = diseaseKey === "HRV2"
-        ? "Roleplay symptoms based on your dinosaur's profile, and in game type **!hrv2** in local chat."
-        : "Roleplay symptoms based on your dinosaur's profile, and in game type **!hrvdelta** in local chat.";
+        ? "Roleplay symptoms based on your dinosaur's profile, and apply the disease by typing **!hrv2** in local chat in-game."
+        : "Roleplay symptoms based on your dinosaur's profile, and apply the disease by typing **!hrvdelta** in local chat in-game.";
 
       const embed = new EmbedBuilder()
         .setTitle("⚠️ WARNING: INFECTION CONTRACTED")
@@ -73,15 +73,27 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     if (sub === "outcome") {
-      const survived = Math.random() < 0.7;
-      const diseaseKey = survived ? "HRV2" : "HRV_DELTA";
+      // Determine which disease the user had
+      const diseaseKey = Math.random() < 0.7 ? "HRV2" : "HRV_DELTA";
       const disease = diseases[diseaseKey];
 
-      let outcome = survived ? "Recovered" : "Succumbed to infection";
-      let color = survived ? 0x57F287 : 0xED4245;
-      let nextStep = survived
-        ? "Type **!recover** in local chat to recover from infection."
-        : "Type **!fatal** in local chat to put your dinosaur to rest.";
+      let outcome;
+      let color;
+      let nextStep;
+
+      if (diseaseKey === "HRV2") {
+        const survived = Math.random() < 0.7;
+        outcome = survived ? "Recovered" : "Succumbed to infection";
+        color = survived ? 0x57F287 : 0xED4245;
+        nextStep = survived
+          ? "Type **!recover** in local chat to recover from infection."
+          : "Type **!fatal** in local chat to put your dinosaur to rest.";
+      } else if (diseaseKey === "HRV_DELTA") {
+        // HRV_DELTA is always fatal
+        outcome = "Succumbed to infection";
+        color = 0xED4245;
+        nextStep = "Type **!fatal** in local chat to put your dinosaur to rest.";
+      }
 
       const embed = new EmbedBuilder()
         .setTitle("☣️ INFECTION OUTCOME")
@@ -118,7 +130,7 @@ client.on("interactionCreate", async (interaction) => {
         .addFields(
           { name: underline("User"), value: `<@${interaction.user.id}>`, inline: true },
           { name: underline("Condition"), value: disease.name },
-          { name: underline("Next Step"), value: "Type **!osteo** in local chat and roleplay behaviors." }
+          { name: underline("Next Step"), value: "Type **!osteo** in local chat and roleplay behavior." }
         )
         .setFooter({ text: "Xiled Project Realism • Infection System" });
 
